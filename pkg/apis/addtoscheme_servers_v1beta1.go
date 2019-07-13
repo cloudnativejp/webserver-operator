@@ -17,7 +17,7 @@ limitations under the License.
 package apis
 
 import (
-	"webserver-operator/pkg/apis/servers/v1beta1"
+	"github.com/cloudnativejp/webserver-operator/pkg/apis/servers/v1beta1"
 )
 
 func init() {

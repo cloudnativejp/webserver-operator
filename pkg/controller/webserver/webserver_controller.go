@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"reflect"
 
-	serversv1beta1 "webserver-operator/pkg/apis/servers/v1beta1"
+	serversv1beta1 "github.com/cloudnativejp/webserver-operator/pkg/apis/servers/v1beta1"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"

@@ -17,7 +17,7 @@ limitations under the License.
 package controller
 
 import (
-	"webserver-operator/pkg/controller/webserver"
+	"github.com/cloudnativejp/webserver-operator/pkg/controller/webserver"
 )
 
 func init() {

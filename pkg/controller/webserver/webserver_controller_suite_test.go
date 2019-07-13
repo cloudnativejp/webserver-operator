@@ -23,7 +23,7 @@ import (
 	"sync"
 	"testing"
 
-	"webserver-operator/pkg/apis"
+	"github.com/cloudnativejp/webserver-operator/pkg/apis"
 
 	"github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"

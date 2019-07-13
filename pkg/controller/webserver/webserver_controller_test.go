@@ -20,7 +20,7 @@ import (
 	"testing"
 	"time"
 
-	serversv1beta1 "webserver-operator/pkg/apis/servers/v1beta1"
+	serversv1beta1 "github.com/cloudnativejp/webserver-operator/pkg/apis/servers/v1beta1"
 
 	"github.com/onsi/gomega"
 	"golang.org/x/net/context"

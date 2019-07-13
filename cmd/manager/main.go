@@ -20,9 +20,9 @@ import (
 	"flag"
 	"os"
 
-	"webserver-operator/pkg/apis"
-	"webserver-operator/pkg/controller"
-	"webserver-operator/pkg/webhook"
+	"github.com/cloudnativejp/webserver-operator/pkg/apis"
+	"github.com/cloudnativejp/webserver-operator/pkg/controller"
+	"github.com/cloudnativejp/webserver-operator/pkg/webhook"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
