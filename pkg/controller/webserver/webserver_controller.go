@@ -18,6 +18,7 @@ package webserver
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	serversv1beta1 "webserver-operator/pkg/apis/servers/v1beta1"
@@ -128,10 +129,41 @@ func (r *ReconcileWebServer) Reconcile(request reconcile.Request) (reconcile.Res
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{"deployment": instance.Name + "-deployment"}},
 				Spec: corev1.PodSpec{
+					InitContainers: []corev1.Container{
+						{
+							Name:  "init",
+							Image: "alpine",
+							Command: []string{
+								"/bin/sh",
+								"-c",
+								fmt.Sprintf("echo %s > /usr/share/nginx/html/index.html", instance.Spec.Content),
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "content-vol",
+									MountPath: "/usr/share/nginx/html/",
+								},
+							},
+						},
+					},
 					Containers: []corev1.Container{
 						{
 							Name:  "nginx",
 							Image: "nginx",
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "content-vol",
+									MountPath: "/usr/share/nginx/html/",
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "content-vol",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
 						},
 					},
 				},
