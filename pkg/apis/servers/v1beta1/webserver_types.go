@@ -25,6 +25,7 @@ import (
 
 // WebServerSpec defines the desired state of WebServer
 type WebServerSpec struct {
+	Content string `json:"content,omitempty"`
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
