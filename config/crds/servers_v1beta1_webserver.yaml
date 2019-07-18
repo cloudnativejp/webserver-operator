@@ -27,6 +27,12 @@ spec:
         metadata:
           type: object
         spec:
+          properties:
+            content:
+              type: string
+            replicas:
+              format: int32
+              type: integer
           type: object
         status:
           type: object
