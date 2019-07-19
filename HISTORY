@@ -1,2 +1,3 @@
 make docker-build
 make install
+make deploy
