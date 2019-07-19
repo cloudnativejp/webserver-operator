@@ -28,6 +28,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -80,6 +81,15 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	err = c.Watch(&source.Kind{Type: &corev1.Service{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &serversv1beta1.WebServer{},
+	})
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -98,6 +108,8 @@ type ReconcileWebServer struct {
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=core,resources=service,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=service/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=servers.cloudnativejp,resources=webservers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=servers.cloudnativejp,resources=webservers/status,verbs=get;update;patch
 func (r *ReconcileWebServer) Reconcile(request reconcile.Request) (reconcile.Result, error) {
@@ -170,5 +182,49 @@ func (r *ReconcileWebServer) Reconcile(request reconcile.Request) (reconcile.Res
 			return reconcile.Result{}, err
 		}
 	}
+
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      instance.Name + "-service",
+			Namespace: instance.Namespace,
+		},
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{
+				corev1.ServicePort{
+					Name:       "http-port",
+					Port:       instance.Spec.Port.HTTP,
+					TargetPort: intstr.FromInt(80),
+					Protocol:   corev1.ProtocolTCP,
+				},
+			},
+			Selector: map[string]string{
+				"deployment": instance.Name + "-deployment",
+			},
+			Type: corev1.ServiceTypeLoadBalancer,
+		},
+	}
+	if err := controllerutil.SetControllerReference(instance, service, r.scheme); err != nil {
+		return reconcile.Result{}, err
+	}
+
+	foundSvc := &corev1.Service{}
+	err = r.Get(context.TODO(), types.NamespacedName{Name: service.Name, Namespace: service.Namespace}, foundSvc)
+	if err != nil && errors.IsNotFound(err) {
+		log.Info("Creating Service", "namespace", service.Namespace, "name", service.Name)
+		err = r.Create(context.TODO(), service)
+		return reconcile.Result{}, err
+	} else if err != nil {
+		return reconcile.Result{}, err
+	}
+	// TODO not exhaustive check
+	if !reflect.DeepEqual(service.Spec.Ports[0].Port, foundSvc.Spec.Ports[0].Port) {
+		foundSvc.Spec.Ports = service.Spec.Ports
+		log.Info("Updating Service", "namespace", service.Namespace, "name", service.Name)
+		err = r.Update(context.TODO(), foundSvc)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+	}
+
 	return reconcile.Result{}, nil
 }
