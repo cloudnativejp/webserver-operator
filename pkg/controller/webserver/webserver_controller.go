@@ -18,6 +18,7 @@ package webserver
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	serversv1beta1 "github.com/cloudnativejp/webserver-operator/pkg/apis/servers/v1beta1"
@@ -121,6 +122,7 @@ func (r *ReconcileWebServer) Reconcile(request reconcile.Request) (reconcile.Res
 			Namespace: instance.Namespace,
 		},
 		Spec: appsv1.DeploymentSpec{
+			Replicas: &instance.Spec.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{"deployment": instance.Name + "-deployment"},
 			},
@@ -131,6 +133,11 @@ func (r *ReconcileWebServer) Reconcile(request reconcile.Request) (reconcile.Res
 						{
 							Name:  "nginx",
 							Image: "nginx",
+							Command: []string{
+								"/bin/sh",
+								"-c",
+								fmt.Sprintf("echo %s > /usr/share/nginx/html/index.html; nginx -g 'daemon off;'", instance.Spec.Content),
+							},
 						},
 					},
 				},
