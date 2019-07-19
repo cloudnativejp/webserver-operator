@@ -1,0 +1,9 @@
+apiVersion: servers.cloudnativejp/v1beta1
+kind: WebServer
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: webserver-sample
+spec:
+  replicas: 3
+  content: Hello, world!
