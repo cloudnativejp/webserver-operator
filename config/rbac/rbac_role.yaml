@@ -25,6 +25,26 @@ rules:
   - update
   - patch
 - apiGroups:
+  - ""
+  resources:
+  - service
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - service/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
   - servers.cloudnativejp
   resources:
   - webservers
