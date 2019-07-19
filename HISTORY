@@ -4,3 +4,4 @@ make deploy
 kubectl apply -f config/samples/sample01.yaml
 make install
 make deploy
+kubectl apply -f config/samples/sample02.yaml
