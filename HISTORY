@@ -1,1 +1,2 @@
 make docker-build
+make install
