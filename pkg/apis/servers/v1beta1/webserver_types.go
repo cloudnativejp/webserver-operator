@@ -25,8 +25,13 @@ import (
 
 // WebServerSpec defines the desired state of WebServer
 type WebServerSpec struct {
-	Replicas int32  `json:"replicas,omitempty"`
-	Content  string `json:"content,omitempty"`
+	Replicas int32         `json:"replicas,omitempty"`
+	Content  string        `json:"content,omitempty"`
+	Port     WebServerPort `json:"port,omitempty"`
+}
+
+type WebServerPort struct {
+	HTTP int32 `json:"http,omitempty"`
 }
 
 // WebServerStatus defines the observed state of WebServer
