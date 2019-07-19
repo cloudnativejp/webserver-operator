@@ -1,3 +1,4 @@
 make docker-build
 make install
 make deploy
+kubectl apply -f config/samples/sample01.yaml
