@@ -7,3 +7,4 @@ make deploy
 kubectl apply -f config/samples/sample02.yaml
 make docker-build
 make install
+make deploy
