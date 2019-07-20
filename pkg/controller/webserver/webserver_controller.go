@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -54,7 +55,7 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileWebServer{Client: mgr.GetClient(), scheme: mgr.GetScheme()}
+	return &ReconcileWebServer{Client: mgr.GetClient(), scheme: mgr.GetScheme(), recorder: mgr.GetRecorder("webserver-operator")}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -98,7 +99,8 @@ var _ reconcile.Reconciler = &ReconcileWebServer{}
 // ReconcileWebServer reconciles a WebServer object
 type ReconcileWebServer struct {
 	client.Client
-	scheme *runtime.Scheme
+	scheme   *runtime.Scheme
+	recorder record.EventRecorder
 }
 
 // Reconcile reads that state of the cluster for a WebServer object and makes changes based on the state read
@@ -112,6 +114,7 @@ type ReconcileWebServer struct {
 // +kubebuilder:rbac:groups=core,resources=service/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=servers.cloudnativejp,resources=webservers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=servers.cloudnativejp,resources=webservers/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 func (r *ReconcileWebServer) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the WebServer instance
 	instance := &serversv1beta1.WebServer{}
@@ -167,6 +170,9 @@ func (r *ReconcileWebServer) Reconcile(request reconcile.Request) (reconcile.Res
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating Deployment", "namespace", deploy.Namespace, "name", deploy.Name)
 		err = r.Create(context.TODO(), deploy)
+		if err == nil {
+			r.recorder.Event(instance, "Normal", "Created", fmt.Sprintf("Created deployment %s/%s", deploy.Namespace, deploy.Name))
+		}
 		return reconcile.Result{}, err
 	} else if err != nil {
 		return reconcile.Result{}, err
@@ -180,6 +186,8 @@ func (r *ReconcileWebServer) Reconcile(request reconcile.Request) (reconcile.Res
 		err = r.Update(context.TODO(), found)
 		if err != nil {
 			return reconcile.Result{}, err
+		} else {
+			r.recorder.Event(instance, "Normal", "Updated", fmt.Sprintf("Updated deployment %s/%s", deploy.Namespace, deploy.Name))
 		}
 	}
 
@@ -212,10 +220,14 @@ func (r *ReconcileWebServer) Reconcile(request reconcile.Request) (reconcile.Res
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating Service", "namespace", service.Namespace, "name", service.Name)
 		err = r.Create(context.TODO(), service)
+		if err == nil {
+			r.recorder.Event(instance, "Normal", "Created", fmt.Sprintf("Created Service %s/%s", deploy.Namespace, deploy.Name))
+		}
 		return reconcile.Result{}, err
 	} else if err != nil {
 		return reconcile.Result{}, err
 	}
+
 	// TODO not exhaustive check
 	if !reflect.DeepEqual(service.Spec.Ports[0].Port, foundSvc.Spec.Ports[0].Port) {
 		foundSvc.Spec.Ports = service.Spec.Ports
@@ -223,6 +235,8 @@ func (r *ReconcileWebServer) Reconcile(request reconcile.Request) (reconcile.Res
 		err = r.Update(context.TODO(), foundSvc)
 		if err != nil {
 			return reconcile.Result{}, err
+		} else {
+			r.recorder.Event(instance, "Normal", "Updated", fmt.Sprintf("Updated Service %s/%s", deploy.Namespace, deploy.Name))
 		}
 	}
 
